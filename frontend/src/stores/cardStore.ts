@@ -11,6 +11,8 @@ interface CardStore {
   
   // 编辑状态
   editingCardId: string | null;
+  editModalCard: IdeaCard | null;
+  isEditModalOpen: boolean;
   
   // 弹窗状态
   isCreateModalOpen: boolean;
@@ -29,6 +31,8 @@ interface CardStore {
   
   // UI 状态方法
   setEditingCardId: (cardId: string | null) => void;
+  setEditModalCard: (card: IdeaCard | null) => void;
+  setEditModalOpen: (open: boolean) => void;
   setCreateModalOpen: (open: boolean) => void;
   setDeletedViewOpen: (open: boolean) => void;
   setHistoryModalData: (data: EditHistoryResponse | null) => void;
@@ -42,6 +46,8 @@ export const useCardStore = create<CardStore>((set, get) => ({
   deletedCards: [],
   isLoading: false,
   error: null,
+  editModalCard: null,
+  isEditModalOpen: false,
   
   editingCardId: null,
   
@@ -97,6 +103,8 @@ export const useCardStore = create<CardStore>((set, get) => ({
         cards: state.cards.map((card) =>
           card._id === cardId ? updatedCard : card
         ),
+        editModalCard: null,
+        isEditModalOpen: false,
         isLoading: false,
         editingCardId: null,
       }));
@@ -159,6 +167,8 @@ export const useCardStore = create<CardStore>((set, get) => ({
   
   // UI 状态方法
   setEditingCardId: (cardId) => set({ editingCardId: cardId }),
+  setEditModalCard: (card) => set({ editModalCard: card }),
+  setEditModalOpen: (open) => set({ isEditModalOpen: open }),
   setCreateModalOpen: (open) => set({ isCreateModalOpen: open }),
   setDeletedViewOpen: (open) => set({ isDeletedViewOpen: open }),
   setHistoryModalData: (data) => set({ historyModalData: data }),

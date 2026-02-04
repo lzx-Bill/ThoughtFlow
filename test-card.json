@@ -1,0 +1,10 @@
+{
+  "title": "Docker完整测试",
+  "content": "测试ThoughtFlow Docker部署功能，包含todo功能测试",
+  "card_style": {
+    "bg_color": "#E8F5E9",
+    "text_color": "#333333",
+    "border_radius": "20px",
+    "shadow": "soft"
+  }
+}

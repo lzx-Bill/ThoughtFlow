@@ -33,6 +33,9 @@ def build_card_response(doc: dict) -> IdeaCardResponse:
     # 确保 card_style 存在
     if "card_style" not in doc or doc["card_style"] is None:
         doc["card_style"] = DEFAULT_CARD_STYLE
+    # 确保 todos 存在
+    if "todos" not in doc:
+        doc["todos"] = []
     # 确保 edit_history 存在
     if "edit_history" not in doc:
         doc["edit_history"] = []
@@ -57,6 +60,7 @@ async def create_idea_card(card: IdeaCardCreate):
         "title": card.title,
         "content": card.content,
         "card_style": card_style,
+        "todos": [],
         "is_deleted": False,
         "create_time": now,
         "update_time": now,
@@ -140,11 +144,16 @@ async def update_idea_card(card_id: str, update: IdeaCardUpdate):
     new_style = update.card_style.model_dump() if update.card_style else DEFAULT_CARD_STYLE
     old_style = update.old_card_style.model_dump() if update.old_card_style else DEFAULT_CARD_STYLE
     
+    # 转换todos为字典格式用于比较
+    new_todos = [todo.model_dump() for todo in update.todos]
+    old_todos = [todo.model_dump() for todo in update.old_todos]
+    
     has_title_change = update.title != update.old_title
     has_content_change = update.content != update.old_content
     has_style_change = new_style != old_style
+    has_todos_change = new_todos != old_todos
     
-    if not (has_title_change or has_content_change or has_style_change):
+    if not (has_title_change or has_content_change or has_style_change or has_todos_change):
         raise HTTPException(status_code=400, detail="无修改内容，无需保存")
     
     now = datetime.utcnow()
@@ -157,6 +166,8 @@ async def update_idea_card(card_id: str, update: IdeaCardUpdate):
         change_content["content"] = {"old": update.old_content, "new": update.content}
     if has_style_change:
         change_content["card_style"] = {"old": old_style, "new": new_style}
+    if has_todos_change:
+        change_content["todos"] = {"old": old_todos, "new": new_todos}
     
     # 构建历史记录
     history_item = {
@@ -175,6 +186,7 @@ async def update_idea_card(card_id: str, update: IdeaCardUpdate):
                 "title": update.title,
                 "content": update.content,
                 "card_style": new_style,
+                "todos": new_todos,
                 "update_time": now
             },
             "$push": {"edit_history": history_item}

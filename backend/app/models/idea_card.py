@@ -12,6 +12,15 @@ MongoDB 文档结构：
     "border_radius": str,
     "shadow": str
   },
+  "todos": [
+    {
+      "todo_id": str,
+      "text": str,
+      "completed": bool,
+      "create_time": datetime,
+      "update_time": datetime
+    }
+  ],
   "is_deleted": bool,
   "create_time": datetime,
   "update_time": datetime,
@@ -23,7 +32,8 @@ MongoDB 文档结构：
       "change_content": {
         "title": {"old": str, "new": str},
         "content": {"old": str, "new": str},
-        "card_style": {"old": dict, "new": dict}
+        "card_style": {"old": dict, "new": dict},
+        "todos": {"old": list, "new": list}
       },
       "edit_note": str
     }

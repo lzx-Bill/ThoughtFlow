@@ -16,12 +16,13 @@ import {
   AccordionPanel,
   AccordionIcon,
   Divider,
+  Checkbox,
   chakra,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { FaHistory, FaArrowRight } from 'react-icons/fa';
 import { useCardStore } from '../stores/cardStore';
-import type { EditHistoryItem } from '../types';
+import type { EditHistoryItem, TodoItem } from '../types';
 
 const MotionBox = chakra(motion.div);
 
@@ -44,12 +45,92 @@ export function HistoryModal() {
     });
   };
 
+  // 渲染待办事项列表
+  const renderTodosList = (todos: TodoItem[]) => {
+    if (!todos || todos.length === 0) {
+      return <Text fontSize="sm" color="gray.500">(\u65e0\u5f85\u529b)</Text>;
+    }
+
+    return (
+      <VStack align="stretch" spacing={1}>
+        {todos.map((todo, idx) => (
+          <HStack key={idx} spacing={2} fontSize="sm">
+            <Checkbox
+              isChecked={todo.completed}
+              isReadOnly
+              size="sm"
+              colorScheme="green"
+            />
+            <Text
+              color="gray.700"
+              textDecoration={todo.completed ? 'line-through' : 'none'}
+              opacity={todo.completed ? 0.6 : 1}
+            >
+              {todo.text}
+            </Text>
+          </HStack>
+        ))}
+      </VStack>
+    );
+  };
+
   // 渲染变更项
   const renderChangeItem = (
     label: string,
-    oldValue: string | object,
-    newValue: string | object
+    oldValue: string | object | TodoItem[],
+    newValue: string | object | TodoItem[]
   ) => {
+    // 特殊处理todos数组
+    if (label === '待办事项' && Array.isArray(oldValue) && Array.isArray(newValue)) {
+      return (
+        <Box mb={3}>
+          <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
+            {label}
+          </Text>
+          <HStack
+            align="flex-start"
+            spacing={2}
+            flexWrap="wrap"
+            bg="gray.50"
+            p={2}
+            borderRadius="8px"
+          >
+            <Box
+              flex={1}
+              p={2}
+              bg="red.50"
+              borderRadius="8px"
+              borderLeft="3px solid"
+              borderColor="red.300"
+              minW="120px"
+            >
+              <Text fontSize="xs" color="red.500" fontWeight="medium" mb={1}>
+                修改前
+              </Text>
+              {renderTodosList(oldValue as TodoItem[])}
+            </Box>
+            <Box alignSelf="center" color="gray.400">
+              <FaArrowRight />
+            </Box>
+            <Box
+              flex={1}
+              p={2}
+              bg="green.50"
+              borderRadius="8px"
+              borderLeft="3px solid"
+              borderColor="green.300"
+              minW="120px"
+            >
+              <Text fontSize="xs" color="green.500" fontWeight="medium" mb={1}>
+                修改后
+              </Text>
+              {renderTodosList(newValue as TodoItem[])}
+            </Box>
+          </HStack>
+        </Box>
+      );
+    }
+
     const oldStr = typeof oldValue === 'object' ? JSON.stringify(oldValue) : oldValue;
     const newStr = typeof newValue === 'object' ? JSON.stringify(newValue) : newValue;
 
@@ -163,6 +244,9 @@ export function HistoryModal() {
               )}
               {change_content.content && (
                 renderChangeItem('内容', change_content.content.old, change_content.content.new)
+              )}
+              {change_content.todos && (
+                renderChangeItem('待办事项', change_content.todos.old, change_content.todos.new)
               )}
               {change_content.card_style && (
                 renderChangeItem(

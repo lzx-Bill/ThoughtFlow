@@ -2,13 +2,17 @@ import { Box } from '@chakra-ui/react';
 import {
   CardGrid,
   CreateCardModal,
+  EditCardModal,
   DeleteConfirmModal,
   HistoryModal,
   DeletedCardsDrawer,
   FloatingButtons,
 } from './components';
+import { useCardStore } from './stores/cardStore';
 
 function App() {
+  const { editModalCard, isEditModalOpen, setEditModalOpen } = useCardStore();
+
   return (
     <Box
       minH="100vh"
@@ -183,6 +187,11 @@ function App() {
 
       {/* 弹窗和抽屉 */}
       <CreateCardModal />
+      <EditCardModal
+        card={editModalCard}
+        isOpen={isEditModalOpen}
+        onClose={() => setEditModalOpen(false)}
+      />
       <DeleteConfirmModal />
       <HistoryModal />
       <DeletedCardsDrawer />

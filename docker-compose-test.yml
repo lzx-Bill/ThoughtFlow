@@ -4,7 +4,7 @@ services:
     image: mongo:7.0
     container_name: thoughtflow-mongo
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - mongo_data:/data/db
     environment:
@@ -40,21 +40,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # 前端 Web 服务
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: thoughtflow-frontend
-    ports:
-      - "3089:80"
-    depends_on:
-      backend:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - thoughtflow-network
 
 volumes:
   mongo_data:

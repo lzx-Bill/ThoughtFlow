@@ -1,3 +1,12 @@
+// 待办事项类型
+export interface TodoItem {
+  todo_id: string;
+  text: string;
+  completed: boolean;
+  create_time: string;
+  update_time: string;
+}
+
 // 卡片样式类型
 export interface CardStyle {
   bg_color: string;
@@ -11,6 +20,7 @@ export interface ChangeContent {
   title?: { old: string; new: string };
   content?: { old: string; new: string };
   card_style?: { old: CardStyle; new: CardStyle };
+  todos?: { old: TodoItem[]; new: TodoItem[] };
 }
 
 // 编辑历史记录项
@@ -27,6 +37,7 @@ export interface IdeaCard {
   _id: string;
   title: string;
   content: string;
+  todos: TodoItem[];
   card_style: CardStyle;
   is_deleted: boolean;
   create_time: string;
@@ -46,9 +57,11 @@ export interface UpdateCardRequest {
   title: string;
   content: string;
   card_style?: CardStyle;
+  todos: TodoItem[];
   old_title: string;
   old_content: string;
   old_card_style?: CardStyle;
+  old_todos: TodoItem[];
   operator?: string;
   edit_note?: string;
 }

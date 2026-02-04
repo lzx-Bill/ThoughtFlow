@@ -149,6 +149,8 @@ export function CreateCardModal() {
                 placeholder="一句话描述你的想法..."
                 borderRadius="12px"
                 borderColor="gray.200"
+                color="gray.800"
+                _placeholder={{ color: 'gray.400' }}
                 _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px #4299E1' }}
                 maxLength={100}
               />
@@ -165,6 +167,8 @@ export function CreateCardModal() {
                 placeholder="详细记录你的想法、计划或灵感..."
                 borderRadius="12px"
                 borderColor="gray.200"
+                color="gray.800"
+                _placeholder={{ color: 'gray.400' }}
                 minH="120px"
                 resize="vertical"
                 _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px #4299E1' }}
