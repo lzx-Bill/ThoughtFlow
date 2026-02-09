@@ -7,6 +7,7 @@ import {
   HistoryModal,
   DeletedCardsDrawer,
   FloatingButtons,
+  GlobalTimelineModal,
 } from './components';
 import { useCardStore } from './stores/cardStore';
 
@@ -195,6 +196,7 @@ function App() {
       <DeleteConfirmModal />
       <HistoryModal />
       <DeletedCardsDrawer />
+      <GlobalTimelineModal />
     </Box>
   );
 }

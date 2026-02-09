@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { IdeaCard, CreateCardRequest, UpdateCardRequest, EditHistoryResponse } from '../types';
+import type { IdeaCard, CreateCardRequest, UpdateCardRequest, EditHistoryResponse, TimelineResponse } from '../types';
 import { ideaCardApi } from '../api';
 
 interface CardStore {
@@ -19,6 +19,8 @@ interface CardStore {
   isDeletedViewOpen: boolean;
   historyModalData: EditHistoryResponse | null;
   deleteConfirmCardId: string | null;
+  isTimelineOpen: boolean;
+  timelineData: TimelineResponse | null;
   
   // 操作方法
   fetchCards: () => Promise<void>;
@@ -28,6 +30,7 @@ interface CardStore {
   softDeleteCard: (cardId: string) => Promise<void>;
   recoverCard: (cardId: string) => Promise<void>;
   fetchHistory: (cardId: string) => Promise<void>;
+  fetchTimeline: (startTime?: string, endTime?: string) => Promise<void>;
   
   // UI 状态方法
   setEditingCardId: (cardId: string | null) => void;
@@ -37,6 +40,8 @@ interface CardStore {
   setDeletedViewOpen: (open: boolean) => void;
   setHistoryModalData: (data: EditHistoryResponse | null) => void;
   setDeleteConfirmCardId: (cardId: string | null) => void;
+  setTimelineOpen: (open: boolean) => void;
+  setTimelineData: (data: TimelineResponse | null) => void;
   clearError: () => void;
 }
 
@@ -55,6 +60,8 @@ export const useCardStore = create<CardStore>((set, get) => ({
   isDeletedViewOpen: false,
   historyModalData: null,
   deleteConfirmCardId: null,
+  isTimelineOpen: false,
+  timelineData: null,
   
   // 获取所有正常卡片
   fetchCards: async () => {
@@ -165,6 +172,18 @@ export const useCardStore = create<CardStore>((set, get) => ({
     }
   },
   
+  // 获取全局时间线
+  fetchTimeline: async (startTime?: string, endTime?: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const timeline = await ideaCardApi.getTimeline(startTime, endTime);
+      set({ timelineData: timeline, isLoading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+      throw error;
+    }
+  },
+  
   // UI 状态方法
   setEditingCardId: (cardId) => set({ editingCardId: cardId }),
   setEditModalCard: (card) => set({ editModalCard: card }),
@@ -173,5 +192,7 @@ export const useCardStore = create<CardStore>((set, get) => ({
   setDeletedViewOpen: (open) => set({ isDeletedViewOpen: open }),
   setHistoryModalData: (data) => set({ historyModalData: data }),
   setDeleteConfirmCardId: (cardId) => set({ deleteConfirmCardId: cardId }),
+  setTimelineOpen: (open) => set({ isTimelineOpen: open }),
+  setTimelineData: (data) => set({ timelineData: data }),
   clearError: () => set({ error: null }),
 }));

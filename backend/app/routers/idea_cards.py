@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from datetime import datetime
+from typing import Optional
 from bson import ObjectId
 from uuid import uuid4
 
@@ -12,6 +13,8 @@ from app.schemas.idea_card import (
     IdeaCardListResponse,
     EditHistoryResponse,
     MessageResponse,
+    TimelineEvent,
+    TimelineResponse,
     CardStyle,
     EditHistoryItem,
     ChangeContent,
@@ -316,3 +319,167 @@ async def get_idea_card(card_id: str):
         raise HTTPException(status_code=404, detail="卡片不存在")
     
     return build_card_response(card)
+
+
+def _diff_todos(old_todos: list, new_todos: list, card_id: str, card_title: str, event_time: datetime) -> list[TimelineEvent]:
+    """比较新旧待办事项列表，生成增删改事件"""
+    events = []
+    old_map = {t.get("todo_id", ""): t for t in old_todos if t.get("todo_id")}
+    new_map = {t.get("todo_id", ""): t for t in new_todos if t.get("todo_id")}
+
+    # 新增的 todo
+    for tid, todo in new_map.items():
+        if tid not in old_map:
+            events.append(TimelineEvent(
+                event_id=str(uuid4()),
+                event_type="todo_added",
+                card_id=card_id,
+                card_title=card_title,
+                event_time=event_time,
+                description=f"「{card_title}」新增待办: {todo.get('text', '')}",
+                details={"todo_text": todo.get("text", ""), "todo_id": tid}
+            ))
+
+    # 删除的 todo
+    for tid, todo in old_map.items():
+        if tid not in new_map:
+            events.append(TimelineEvent(
+                event_id=str(uuid4()),
+                event_type="todo_deleted",
+                card_id=card_id,
+                card_title=card_title,
+                event_time=event_time,
+                description=f"「{card_title}」删除待办: {todo.get('text', '')}",
+                details={"todo_text": todo.get("text", ""), "todo_id": tid}
+            ))
+
+    # 修改的 todo (text 或 completed 状态变化)
+    for tid in new_map:
+        if tid in old_map:
+            old_t = old_map[tid]
+            new_t = new_map[tid]
+            changes = []
+            if old_t.get("text") != new_t.get("text"):
+                changes.append(f"内容: \"{old_t.get('text')}\" → \"{new_t.get('text')}\"")
+            if old_t.get("completed") != new_t.get("completed"):
+                status_str = "已完成" if new_t.get("completed") else "未完成"
+                changes.append(f"状态: {status_str}")
+            if changes:
+                events.append(TimelineEvent(
+                    event_id=str(uuid4()),
+                    event_type="todo_updated",
+                    card_id=card_id,
+                    card_title=card_title,
+                    event_time=event_time,
+                    description=f"「{card_title}」更新待办: {new_t.get('text', '')} ({', '.join(changes)})",
+                    details={
+                        "todo_text": new_t.get("text", ""),
+                        "old_todo_text": old_t.get("text", ""),
+                        "todo_id": tid,
+                        "changes": changes
+                    }
+                ))
+
+    return events
+
+
+@router.get("/timeline", response_model=TimelineResponse)
+async def get_global_timeline(
+    start_time: Optional[str] = Query(None, description="起始时间 ISO 格式"),
+    end_time: Optional[str] = Query(None, description="结束时间 ISO 格式"),
+):
+    """
+    获取全局操作时间线
+    
+    汇总所有卡片的创建、删除、标题修改和待办事项变更事件。
+    支持按时间范围筛选。
+    """
+    db = get_database()
+    
+    # 解析时间范围
+    dt_start = None
+    dt_end = None
+    if start_time:
+        try:
+            dt_start = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="无效的起始时间格式")
+    if end_time:
+        try:
+            dt_end = datetime.fromisoformat(end_time.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="无效的结束时间格式")
+
+    # 获取所有卡片(包括已删除)
+    cursor = db[COLLECTION_NAME].find({})
+    all_cards = await cursor.to_list(length=5000)
+
+    events: list[TimelineEvent] = []
+
+    for card in all_cards:
+        card_id = str(card["_id"])
+        card_title = card.get("title", "未命名")
+        create_time = card.get("create_time")
+        is_deleted = card.get("is_deleted", False)
+
+        # 1. 卡片创建事件
+        if create_time:
+            events.append(TimelineEvent(
+                event_id=str(uuid4()),
+                event_type="card_created",
+                card_id=card_id,
+                card_title=card_title,
+                event_time=create_time,
+                description=f"新增「{card_title}」",
+            ))
+
+        # 2. 卡片删除事件 (is_deleted=True 且没有后续恢复)
+        if is_deleted:
+            delete_time = card.get("update_time", create_time)
+            events.append(TimelineEvent(
+                event_id=str(uuid4()),
+                event_type="card_deleted",
+                card_id=card_id,
+                card_title=card_title,
+                event_time=delete_time,
+                description=f"删除「{card_title}」",
+            ))
+
+        # 3. 从 edit_history 提取标题变更和 todo 变更
+        for hist in card.get("edit_history", []):
+            cc = hist.get("change_content", {})
+            edit_time = hist.get("edit_time")
+            if not edit_time:
+                continue
+
+            # 标题变更
+            if cc.get("title"):
+                old_title = cc["title"].get("old", "")
+                new_title = cc["title"].get("new", "")
+                events.append(TimelineEvent(
+                    event_id=str(uuid4()),
+                    event_type="title_changed",
+                    card_id=card_id,
+                    card_title=card_title,
+                    event_time=edit_time,
+                    description=f"标题修改: 「{old_title}」→「{new_title}」",
+                    details={"old_title": old_title, "new_title": new_title}
+                ))
+
+            # 待办事项变更
+            if cc.get("todos"):
+                old_todos = cc["todos"].get("old", [])
+                new_todos = cc["todos"].get("new", [])
+                todo_events = _diff_todos(old_todos, new_todos, card_id, card_title, edit_time)
+                events.extend(todo_events)
+
+    # 时间范围筛选
+    if dt_start:
+        events = [e for e in events if e.event_time >= dt_start]
+    if dt_end:
+        events = [e for e in events if e.event_time <= dt_end]
+
+    # 按时间倒序排列
+    events.sort(key=lambda e: e.event_time, reverse=True)
+
+    return TimelineResponse(events=events, total=len(events))

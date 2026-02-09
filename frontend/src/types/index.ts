@@ -86,6 +86,30 @@ export interface MessageResponse {
   success: boolean;
 }
 
+// 全局时间线事件
+export interface TimelineEvent {
+  event_id: string;
+  event_type: 'card_created' | 'card_deleted' | 'title_changed' | 'todo_added' | 'todo_updated' | 'todo_deleted';
+  card_id: string;
+  card_title: string;
+  event_time: string;
+  description: string;
+  details?: {
+    old_title?: string;
+    new_title?: string;
+    todo_text?: string;
+    old_todo_text?: string;
+    todo_id?: string;
+    changes?: string[];
+  };
+}
+
+// 全局时间线响应
+export interface TimelineResponse {
+  events: TimelineEvent[];
+  total: number;
+}
+
 // 预设卡片样式
 export const PRESET_CARD_STYLES: CardStyle[] = [
   { bg_color: "#FFF9C4", text_color: "#333333", border_radius: "20px", shadow: "soft" }, // 浅黄

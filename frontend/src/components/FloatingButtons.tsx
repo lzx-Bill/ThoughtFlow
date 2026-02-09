@@ -1,12 +1,12 @@
 import { Box, IconButton, Tooltip, chakra } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { FaPlus, FaTrashRestore } from 'react-icons/fa';
+import { FaPlus, FaTrashRestore, FaClock } from 'react-icons/fa';
 import { useCardStore } from '../stores/cardStore';
 
 const MotionBox = chakra(motion.div);
 
 export function FloatingButtons() {
-  const { setCreateModalOpen, setDeletedViewOpen, deletedCards } = useCardStore();
+  const { setCreateModalOpen, setDeletedViewOpen, setTimelineOpen, deletedCards } = useCardStore();
 
   return (
     <>
@@ -44,11 +44,50 @@ export function FloatingButtons() {
         </Tooltip>
       </MotionBox>
 
-      {/* 已删除卡片按钮 - 右下角上方 */}
+      {/* 全局时间线按钮 - 右下角左侧第一个 */}
       <MotionBox
         position="fixed"
         bottom={8}
         right={24 + 64 + 16}
+        zIndex={100}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.35, type: 'spring', stiffness: 200 }}
+      >
+        <Tooltip label="全局时间线" placement="left" hasArrow>
+          <IconButton
+            aria-label="全局时间线"
+            icon={<FaClock size={18} />}
+            onClick={() => setTimelineOpen(true)}
+            size="md"
+            w="48px"
+            h="48px"
+            borderRadius="full"
+            bg="rgba(51, 65, 85, 0.8)"
+            color="purple.300"
+            backdropFilter="blur(10px)"
+            border="1px solid"
+            borderColor="purple.500"
+            boxShadow="0 4px 20px rgba(167, 139, 250, 0.3)"
+            _hover={{
+              transform: 'translateY(-2px)',
+              boxShadow: '0 8px 30px rgba(167, 139, 250, 0.4)',
+              bg: 'rgba(51, 65, 85, 0.9)',
+              borderColor: 'purple.400',
+            }}
+            _active={{
+              transform: 'translateY(-1px) scale(0.98)',
+            }}
+            transition="all 0.2s ease"
+          />
+        </Tooltip>
+      </MotionBox>
+
+      {/* 已删除卡片按钮 - 右下角左侧第二个 */}
+      <MotionBox
+        position="fixed"
+        bottom={8}
+        right={24 + 64 + 16 + 48 + 12}
         zIndex={100}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}

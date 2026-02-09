@@ -6,6 +6,7 @@ import type {
   CardListResponse,
   EditHistoryResponse,
   MessageResponse,
+  TimelineResponse,
 } from '../types';
 
 // 创建 axios 实例
@@ -74,6 +75,15 @@ export const ideaCardApi = {
   // 获取编辑历史
   getHistory: async (cardId: string): Promise<EditHistoryResponse> => {
     const response = await api.get<EditHistoryResponse>(`/idea-card/${cardId}/history`);
+    return response.data;
+  },
+
+  // 获取全局时间线
+  getTimeline: async (startTime?: string, endTime?: string): Promise<TimelineResponse> => {
+    const params: Record<string, string> = {};
+    if (startTime) params.start_time = startTime;
+    if (endTime) params.end_time = endTime;
+    const response = await api.get<TimelineResponse>('/timeline', { params });
     return response.data;
   },
 };

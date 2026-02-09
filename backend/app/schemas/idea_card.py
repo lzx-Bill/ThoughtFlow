@@ -92,3 +92,20 @@ class MessageResponse(BaseModel):
     """通用消息响应"""
     message: str = Field(..., description="消息内容")
     success: bool = Field(default=True, description="是否成功")
+
+
+class TimelineEvent(BaseModel):
+    """全局时间线事件"""
+    event_id: str = Field(..., description="事件唯一ID")
+    event_type: str = Field(..., description="事件类型: card_created, card_deleted, title_changed, todo_added, todo_updated, todo_deleted")
+    card_id: str = Field(..., description="关联卡片ID")
+    card_title: str = Field(..., description="卡片标题")
+    event_time: datetime = Field(..., description="事件时间")
+    description: str = Field(..., description="事件描述")
+    details: Optional[dict[str, Any]] = Field(default=None, description="事件详情")
+
+
+class TimelineResponse(BaseModel):
+    """全局时间线响应"""
+    events: list[TimelineEvent] = Field(..., description="时间线事件列表")
+    total: int = Field(..., description="事件总数")

@@ -6,3 +6,4 @@ export { DeleteConfirmModal } from './DeleteConfirmModal';
 export { HistoryModal } from './HistoryModal';
 export { DeletedCardsDrawer } from './DeletedCardsDrawer';
 export { FloatingButtons } from './FloatingButtons';
+export { GlobalTimelineModal } from './GlobalTimelineModal';
